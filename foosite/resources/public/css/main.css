@@ -1,0 +1,13 @@
+#graph {
+	position: absolute;
+	bottom: 1em;
+	left: 0.5em;
+	right: 300px;
+	top: 5em;
+}
+
+#legend {
+	position: absolute;
+	top: 0.5em;
+	right: 0.5em;
+}
