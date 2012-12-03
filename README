@@ -1,0 +1,6 @@
+To use:
+
+ - Put all data into a "data" directory in the root of the project.
+ - Create a "data" folder in the root of "foosite"
+ - run "lein run" in pipeline
+ - run "lein run" in foosite
