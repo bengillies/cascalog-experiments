@@ -16,5 +16,6 @@
                 [:div#legend]]
                [:script {:src "/js/jquery-1.8.3.min.js"}]
                [:script {:src "/js/d3.v2.min.js"}]
+               [:script {:src "/js/jquery-ui.min.js"}]
                [:script {:src "/js/rickshaw.min.js"}]
                (include-js "/js/main.js")]))

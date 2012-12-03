@@ -27,6 +27,21 @@ $.getJSON('/organisations', function(data) {
 		element: $('#legend')[0]
 	});
 
+	var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
+		graph: graph,
+		legend: legend
+	});
+
+	var order = new Rickshaw.Graph.Behavior.Series.Order({
+		graph: graph,
+		legend: legend
+	});
+
+	var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
+		graph: graph,
+		legend: legend
+	});
+
 	var time = new Rickshaw.Fixtures.Time()
 	years = time.unit('year');
 	var xAxis = new Rickshaw.Graph.Axis.Time({
@@ -42,11 +57,6 @@ $.getJSON('/organisations', function(data) {
 		graph: graph,
 		xFormatter: function(x) { return x; },
 		yFormatter: function(y) { return '£' + y; }
-	});
-
-	var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
-		graph: graph,
-		legend: legend
 	});
 
 	graph.render();
