@@ -12,8 +12,11 @@
 
 (defpage "/" []
          (common/layout
-           [:h1 "Universities and the amount they received in Grants"]))
+           [:h1
+            [:span "Top "]
+            [:span#num-orgs ""]
+            [:span " Universities and the amount they received in Grants"]]))
 
 
 (defpage "/organisations" []
-         (response/json (sort-by :total (load-data "data/totals/part-00000"))))
+         (response/json (sort-by :total > (load-data "data/totals/part-00000"))))
