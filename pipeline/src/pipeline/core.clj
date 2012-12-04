@@ -32,6 +32,8 @@
 (def grant-in "../data/grants_epsrc_grants_1.csv")
 (def department-in "../data/departments_epsrc_grants_1.csv")
 (def organisation-in "../data/organisations_epsrc_grants_1.csv")
+(def partner-in "../data/partner_epsrc_grants_1.csv")
+(def partner-grant-mapping "../data/partner_grants_epsrc_grants_1.csv")
 
 
 (defn get-year [date-str]
@@ -76,14 +78,15 @@
   "extract the values we need from the grant data"
   [(Long. (n :value))
    (n :id)
-   (get-year (n :start-date))])
+   (get-year (n :start-date))
+   (n :ref)])
 
 (def grant-values
   "query grant data for value, departmentid and year grant started"
-  (<- [?value ?departmentid ?year]
+  (<- [?value ?departmentid ?year ?ref]
       ((csv-tap grant-in) ?row)
       (to-grant ?row :> ?grant)
-      (get-grant-values ?grant :> ?value ?departmentid ?year)))
+      (get-grant-values ?grant :> ?value ?departmentid ?year ?ref)))
 
 
 (defn get-department-ids [n]
@@ -121,7 +124,7 @@
 (def grants-plus-orgs
   "swap department ids from grant-values with organisation names"
   (<- [?value ?orgname ?year]
-      (grant-values ?value ?departmentid ?year)
+      (grant-values ?value ?departmentid ?year ?ref)
       (department-to-organisation ?departmentid ?orgname)))
 
 
@@ -131,6 +134,46 @@
       (grants-plus-orgs ?value ?orgname ?year)
       (sum ?value :> ?total)))
 
+
+(defn get-partner-map [row]
+  "return partner id and grant reference"
+  row)
+(def partner-grant
+  "partner to grant mappings"
+  (<- [?id ?ref]
+      ((csv-tap partner-grant-mapping) ?map-row)
+      (get-partner-map ?map-row :> ?id ?ref)))
+
+
+(defn get-partner-info [row]
+  "return partner name and id from partner data"
+  [(nth row 1) (nth row 2)])
+(def partner-names
+  "match up partner names with grant references"
+  (<- [?partner ?ref]
+      ((csv-tap partner-in) ?partner-row)
+      (get-partner-info ?partner-row :> ?partner ?id)
+      (partner-grant ?id ?ref)))
+
+
+(def partner-organisations
+  "filter only those partners who also have grants themselves and match them up
+  to organisations"
+  (<- [?partner ?ref ?orgname]
+      (partner-names ?partner ?ref)
+      (grant-values ?value ?departmentid ?year ?ref)
+      (department-to-organisation ?departmentid ?orgname)))
+
+(defbufferop group-collaborations
+             "reduce partner-organisations to organisations with a list of
+             partners"
+             [tuples]
+             (let [orgs (group-by last tuples)]
+               (map (fn [[org tuple-list]]
+                      {:organisation org
+                       :collaborators (vec (map (fn [tuple] (first tuple))
+                                                tuple-list))})
+                    orgs)))
 
 (defbufferop group-totals
              "reduce tuples into a list grouping totals and years by
@@ -151,7 +194,10 @@
   "Calculate total grants per year per organisation"
   (?<- (output-tap "../foosite/data/totals") [?totals]
        (sum-grants ?orgname ?total ?year)
-       (group-totals ?orgname ?total ?year :> ?totals)))
+       (group-totals ?orgname ?total ?year :> ?totals))
+  (?<- (output-tap "../foosite/data/collaborations") [?collaborations]
+      (partner-organisations ?partner ?ref ?orgname)
+      (group-collaborations ?partner ?ref ?orgname :> ?collaborations)))
 
 (defn -main [& m]
   (bootstrap)
