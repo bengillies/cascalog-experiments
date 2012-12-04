@@ -16,4 +16,4 @@
 
 
 (defpage "/organisations" []
-         (response/json (load-data "data/totals/part-00000")))
+         (response/json (sort-by :total (load-data "data/totals/part-00000"))))

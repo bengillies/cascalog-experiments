@@ -139,6 +139,7 @@
              (let [orgs (group-by first tuples)]
                (map (fn [[org tuple-list]]
                       {:organisation org
+                       :total (reduce #(+ %1 (nth %2 1)) 0 tuple-list)
                        :totals  (vec (map (fn [tuple]
                                             {:total (nth tuple 1)
                                              :year (last tuple)})
