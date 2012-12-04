@@ -16,7 +16,7 @@
 				color: palette.color(),
 				data: data.totals.map(function(point) {
 					return {
-						x: point.year,
+						x: (point.year- 1970) * 3.15569e7, // year in seconds
 						y: point.total
 					};
 				})
@@ -61,11 +61,8 @@
 			legend: legend
 		});
 
-		var time = new Rickshaw.Fixtures.Time()
-		years = time.unit('year');
 		var xAxis = new Rickshaw.Graph.Axis.Time({
-			graph: graph,
-			timeUnit: years
+			graph: graph
 		});
 
 		var yAxis = new Rickshaw.Graph.Axis.Y({
@@ -74,7 +71,6 @@
 
 		var hoverDetail = new Rickshaw.Graph.HoverDetail({
 			graph: graph,
-			xFormatter: function(x) { return x; },
 			yFormatter: function(y) { return '£' + y; }
 		});
 
