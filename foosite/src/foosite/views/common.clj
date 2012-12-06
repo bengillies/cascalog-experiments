@@ -10,10 +10,11 @@
                (include-css "/css/rickshaw.min.css")
                (include-css "/css/main.css")]
               [:body
+               [:nav
+                [:a {:href "/"} "Grant Funding"]
+                [:a {:href "/collaborations"} "Collaborations"]]
                [:div#content
-                [:p content]
-                [:div#graph]
-                [:div#legend]]
+                [:p content]]
                (include-js "/js/jquery-1.8.3.min.js")
                (include-js "/js/d3.v2.min.js")
                (include-js "/js/jquery-ui.min.js")

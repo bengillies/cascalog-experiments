@@ -1,4 +1,4 @@
-(function() {
+function grantData() {
 	var graph, store;
 
 	var limits = {
@@ -114,4 +114,13 @@
 			});
 		});
 	});
-}());
+}
+
+function collaborationData() {
+}
+
+if (/collaborations/.test(window.location.href)) {
+	collaborationData();
+} else {
+	grantData();
+}
