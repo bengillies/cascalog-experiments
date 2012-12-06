@@ -159,28 +159,49 @@
 (def partner-organisations
   "filter only those partners who also have grants themselves and match them up
   to organisations"
-  (<- [?partner ?orgname ?value]
+  (<- [?partner ?orgname ?value ?ref]
       (partner-names ?partner ?ref)
       (grant-values ?value ?departmentid ?year ?ref)
       (department-to-organisation ?departmentid ?orgname)))
 
+(defaggregateop combine-grants
+                "sum up all grant values and return with a list of all grant
+                references (and their values) that made up the total"
+                ([] [0 []])
+                ([[total refs] value grant-ref] [(+ total value)
+                                                 (conj refs {:ref grant-ref
+                                                             :value value})])
+                ([[total refs]] [{:total total :refs refs}]))
+
 (def sum-partners
   "sum total value of grants for each organisation per partner"
   (<- [?partner ?orgname ?total]
-      (partner-organisations ?partner ?orgname ?value)
-      (sum ?value :> ?total)))
+      (partner-organisations ?partner ?orgname ?value ?ref)
+      (combine-grants ?value ?ref :> ?total)))
 
 (defbufferop group-collaborations
              "reduce partner-organisations to organisations with a list of
-             partners"
+             partners. Only count each grant once when calculating the grand
+             total"
              [tuples]
-             (let [orgs (group-by last tuples)]
+             (let [orgs (group-by last tuples)
+                   sum-refs (fn [lst]
+                              (first (reduce (fn [acc tuple]
+                                        (reduce (fn [[total refs] ref]
+                                                  (if (some #{(ref :ref)} refs)
+                                                    [total refs]
+                                                    [(+ total (ref :value))
+                                                     (conj refs (ref :ref))]))
+                                                acc (:refs (nth tuple 1))))
+                                      [0 []] lst)))]
                (map (fn [[org tuple-list]]
                       {:organisation org
-                       :total (reduce #(+ %1 (nth %2 1)) 0 tuple-list)
+                       :total (sum-refs tuple-list)
                        :collaborators (vec (map (fn [tuple]
                                                   {:collaborator (first tuple)
-                                                   :value (nth tuple 1)})
+                                                   :refs (:refs (nth tuple 1))
+                                                   :total (:total
+                                                            (nth tuple 1))})
                                                 tuple-list))})
                     orgs)))
 
@@ -204,9 +225,10 @@
   (?<- (output-tap "../foosite/data/totals") [?totals]
        (sum-grants ?orgname ?total ?year)
        (group-totals ?orgname ?total ?year :> ?totals))
-  (?<- (output-tap "../foosite/data/collaborations") [?collaborations]
+  (with-debug (?<- (output-tap "../foosite/data/collaborations") [?collaborations]
        (sum-partners ?partner ?orgname ?total)
-       (group-collaborations ?partner ?total ?orgname :> ?collaborations)))
+       (group-collaborations ?partner ?total ?orgname :>
+                             ?collaborations))))
 
 (defn -main [& m]
   (bootstrap)
