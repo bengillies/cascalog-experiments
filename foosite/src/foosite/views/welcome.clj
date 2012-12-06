@@ -4,11 +4,11 @@
             [noir.request :as request])
   (:use noir.core
         [cascalog.playground :only [bootstrap]]
-        [clojure.string :only [split]]))
+        [clojure.string :only [split-lines]]))
 
 (defn load-data [path]
   (let [data (slurp path)
-        orgs (split data #"\n")]
+        orgs (split-lines data)]
     (map read-string orgs)))
 
 (defpage "/" []
