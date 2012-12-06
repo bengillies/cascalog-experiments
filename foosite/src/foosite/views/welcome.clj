@@ -9,7 +9,7 @@
 (defn load-data [path]
   (let [data (slurp path)
         orgs (split data #"\n")]
-    (map load-string orgs)))
+    (map read-string orgs)))
 
 (defpage "/" []
          (common/layout
@@ -30,15 +30,8 @@
                contains (fn [obj match] (and (not (nil? obj))
                                              (not= (.indexOf obj match) -1)))]
            (if (contains accept "application/json")
-             (response/json
-               (map (fn [org]
-                      (let [collaborators
-                            (into {} (map (fn [[k v]]
-                                            [k (count v)])
-                                          (group-by identity
-                                                    (:collaborators org))))]
-                        {:organisation (:organisation org)
-                         :collaborators collaborators}))
-                    (load-data "data/collaborations/part-00000")))
+             (response/json (sort-by
+                              :total >
+                              (load-data "data/collaborations/part-00000")))
              (common/layout
                [:h1 "Collaborations"]))))

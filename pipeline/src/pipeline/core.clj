@@ -159,10 +159,16 @@
 (def partner-organisations
   "filter only those partners who also have grants themselves and match them up
   to organisations"
-  (<- [?partner ?ref ?orgname]
+  (<- [?partner ?orgname ?value]
       (partner-names ?partner ?ref)
       (grant-values ?value ?departmentid ?year ?ref)
       (department-to-organisation ?departmentid ?orgname)))
+
+(def sum-partners
+  "sum total value of grants for each organisation per partner"
+  (<- [?partner ?orgname ?total]
+      (partner-organisations ?partner ?orgname ?value)
+      (sum ?value :> ?total)))
 
 (defbufferop group-collaborations
              "reduce partner-organisations to organisations with a list of
@@ -171,7 +177,10 @@
              (let [orgs (group-by last tuples)]
                (map (fn [[org tuple-list]]
                       {:organisation org
-                       :collaborators (vec (map (fn [tuple] (first tuple))
+                       :total (reduce #(+ %1 (nth %2 1)) 0 tuple-list)
+                       :collaborators (vec (map (fn [tuple]
+                                                  {:collaborator (first tuple)
+                                                   :value (nth tuple 1)})
                                                 tuple-list))})
                     orgs)))
 
@@ -196,8 +205,8 @@
        (sum-grants ?orgname ?total ?year)
        (group-totals ?orgname ?total ?year :> ?totals))
   (?<- (output-tap "../foosite/data/collaborations") [?collaborations]
-      (partner-organisations ?partner ?ref ?orgname)
-      (group-collaborations ?partner ?ref ?orgname :> ?collaborations)))
+       (sum-partners ?partner ?orgname ?total)
+       (group-collaborations ?partner ?total ?orgname :> ?collaborations)))
 
 (defn -main [& m]
   (bootstrap)
