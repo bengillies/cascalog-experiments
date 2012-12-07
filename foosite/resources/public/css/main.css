@@ -26,3 +26,22 @@ h1 {
 	text-decoration: underline;
 	cursor: ew-resize;
 }
+
+.selector {
+	padding: 1em;
+	position: absolute;
+	top: 2em;
+	right: 2em;
+}
+
+select {
+	width: 220px;
+}
+
+.chzn-container {
+	width: 240px !important;
+}
+
+nav a {
+	padding: 1em;
+}

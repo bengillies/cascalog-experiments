@@ -117,6 +117,104 @@ function grantData() {
 }
 
 function collaborationData() {
+	var orgs = [];
+	var collaborators = {};
+	var $select = $('select');
+
+	function formatData(org) {
+		var orig = org.collaborators;
+		var matrix = new Array(orig.length + 1);
+		var zeroArray = [];
+		for (var i = 0, l = orig.length + 1; i < l; i++) {
+			zeroArray.push(0);
+		}
+		for (i = 0, l = orig.length + 1; i < l; i++) {
+			matrix[i] = zeroArray.slice(0);
+		}
+
+		orig.forEach(function(collaborator, i) {
+			matrix[0][i+1] = collaborator.total;
+			matrix[i+1][0] = collaborator.total;
+		});
+
+		return matrix;
+	}
+
+	$.getJSON('/collaborations', function(data) {
+		data.forEach(function(el) {
+			orgs.push(el.organisation);
+			collaborators[el.organisation] = el;
+		});
+
+		orgs.forEach(function(org) {
+			$('<option/>', { value: org }).text(org)
+				.appendTo($select);
+		});
+
+		$select.chosen();
+	});
+
+	$select.on('change', function(ev) {
+		$('svg').remove();
+
+		var org = collaborators[$(this).val()];
+
+		var matrix = formatData(org);
+
+		var chord = d3.layout.chord()
+			.padding(.05)
+			.sortSubgroups(d3.descending)
+			.matrix(matrix);
+
+		var width = $(document).width(),
+			height = $(document).height() - 50,
+			innerRadius = Math.min(width, height) * .41,
+			outerRadius = innerRadius * 1.1;
+
+		var fill = d3.scale.ordinal()
+			.domain(d3.range(4))
+			.range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+		var svg = d3.select('body').append('svg')
+			.attr('width', width)
+			.attr('height', height)
+			.append('g')
+				.attr('transform', 'translate(' + width / 2 +
+					',' + height/2 + ')');
+
+		svg.append('g').selectAll('path')
+			.data(chord.groups)
+			.enter().append('path')
+				.style('fill', function(d) { return fill(d.index); })
+				.style('stroke', function(d) { return fill(d.index); })
+				.attr('d', d3.svg.arc().innerRadius(innerRadius)
+					.outerRadius(outerRadius))
+				.on('mouseover', fade(.1))
+				.on('mouseout', fade(1));
+
+		// XXX: ticks go here
+
+		svg.append('g')
+			.attr('class', 'chord')
+			.selectAll('path')
+				.data(chord.chords)
+				.enter().append('path')
+					.attr('d', d3.svg.chord().radius(innerRadius))
+					.style('fill', function(d) { return fill(d.target.index); })
+					.style('opacity', .7)
+					.style('stroke', '#000')
+					.style('stroke-width', '.5px');
+
+		function fade(opacity) {
+			return function(g, i) {
+				svg.selectAll(".chord path")
+					.filter(function(d) {
+						return d.source.index != i && d.target.index != i;
+					}).transition()
+					.style("opacity", opacity);
+			};
+		}
+	});
 }
 
 if (/collaborations/.test(window.location.href)) {

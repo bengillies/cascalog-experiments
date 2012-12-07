@@ -8,6 +8,7 @@
                [:title "foosite"]
                (include-css "/css/reset.css")
                (include-css "/css/rickshaw.min.css")
+               (include-css "/css/chosen.css")
                (include-css "/css/main.css")]
               [:body
                [:nav
@@ -19,6 +20,7 @@
                (include-js "/js/d3.v2.min.js")
                (include-js "/js/jquery-ui.min.js")
                (include-js "/js/rickshaw.min.js")
+               (include-js "/js/chosen.jquery.min.js")
                (include-js "/js/domb.js")
                (include-js "/js/fp.js")
                (include-js "/js/main.js")]))

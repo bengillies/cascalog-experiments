@@ -34,4 +34,7 @@
                               :total >
                               (load-data "data/collaborations/part-00000")))
              (common/layout
-               [:h1 "Collaborations"]))))
+               [:h1 "Collaborations"]
+               [:div {:class "selector"}
+                [:select {:data-placeholder "Choose an Organisation"}
+                 [:option {:value ""}]]]))))
